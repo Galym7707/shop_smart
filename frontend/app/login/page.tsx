@@ -23,12 +23,10 @@ export default function Login() {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, formData);
       localStorage.setItem('token', response.data.token);
-      setSuccess('Login successful! Redirecting to homepage...');
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      setSuccess('Login successful! Redirecting...');
+      router.push('/');
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'An unexpected error occurred. Please try again.';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
       console.error('Login error:', err.response || err);
     }
@@ -75,7 +73,7 @@ export default function Login() {
           {success && <p className="text-green-500 mb-4">{success}</p>}
           <button
             type="submit"
-            className="w-full bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition duration-300 disabled:opacity-50"
+            className="w-full bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition duration-300"
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}
