@@ -21,21 +21,28 @@ export default function Login() {
     setError('');
     setSuccess('');
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, formData);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
+      const loginUrl = `${apiUrl}/api/login`;
+      console.log('Attempting login at:', loginUrl);
+      const response = await axios.post(loginUrl, formData);
       localStorage.setItem('token', response.data.token);
       setSuccess('Login successful! Redirecting...');
       router.push('/');
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'An unexpected error occurred. Please try again.';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
-      console.error('Login error:', err.response || err);
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
     setLoading(false);
   };
 
   return (
     <section className="py-20 bg-white">
-      <div className="container">
+      <div class="container">
         <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">Login</h2>
         <form
           onSubmit={handleSubmit}
