@@ -7,25 +7,27 @@ const { suggestItems } = require('../services/gemini');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Middleware to verify token
 const verifyToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    console.log('Authorization header:', authHeader);
-    const token = authHeader?.split(' ')[1];
-    if (!token) {
-      console.log('No token provided in request');
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Token decoded successfully:', decoded);
-      req.userId = decoded.userId;
-      next();
-    } catch (error) {
-      console.error('Token verification error:', error);
-      res.status(401).json({ error: 'Invalid token' });
-    }
-  };
+  const authHeader = req.headers['authorization'];
+  console.log('Authorization header:', authHeader);
+  const token = authHeader?.split(' ')[1];
+  if (!token) {
+    console.log('No token provided in request');
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Token decoded successfully:', decoded);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
+// Register a new user
 router.post('/register', async (req, res) => {
   try {
     console.log('Register route called with body:', req.body);
@@ -56,6 +58,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Login a user
 router.post('/login', async (req, res) => {
   try {
     console.log('Login route called with body:', req.body);
@@ -86,179 +89,175 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Get a specific list
 router.get('/lists/:uuid', verifyToken, async (req, res) => {
-    try {
-      console.log('Fetching list for user:', req.userId, 'with uuid:', req.params.uuid);
-      const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-      if (!list) return res.status(404).json({ error: 'List not found' });
-  
-      if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
-        return res.status(403).json({ error: 'You do not have permission to view this list' });
-      }
-  
-      res.json(list);
-    } catch (error) {
-      console.error('Get list error:', error);
-      res.status(500).json({ error: 'Server error' });
+  try {
+    console.log('Fetching list for user:', req.userId, 'with uuid:', req.params.uuid);
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+
+    if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
+      return res.status(403).json({ error: 'You do not have permission to view this list' });
     }
-  });
 
-  router.post('/lists', verifyToken, async (req, res) => {
-    try {
-      console.log('Create list route called for user:', req.userId);
-      const { name } = req.body;
-      if (!name || !name.trim()) {
-        return res.status(400).json({ error: 'List name is required' });
-      }
-      const uuid = uuidv4();
-      const list = new ShoppingList({ uuid, name, owner: req.userId, items: [], collaborators: [] });
-      await list.save();
-      console.log('List created successfully:', uuid);
-      res.status(201).json({ uuid, name });
-    } catch (error) {
-      console.error('Create list error:', error);
-      res.status(500).json({ error: 'Server error' });
+    res.json(list);
+  } catch (error) {
+    console.error('Get list error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a new list
+router.post('/lists', verifyToken, async (req, res) => {
+  try {
+    console.log('Create list route called for user:', req.userId);
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'List name is required' });
     }
-  });
+    const uuid = uuidv4();
+    const list = new ShoppingList({ uuid, name, owner: req.userId, items: [], collaborators: [] });
+    await list.save();
+    console.log('List created successfully:', uuid);
+    res.status(201).json({ uuid, name });
+  } catch (error) {
+    console.error('Create list error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
-  // Update list name
-    router.patch('/lists/:uuid', verifyToken, async (req, res) => {
-        try {
-        const { name } = req.body;
-        if (!name || !name.trim()) {
-            return res.status(400).json({ error: 'List name is required' });
-        }
-        const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-        if (!list) return res.status(404).json({ error: 'List not found' });
-        if (list.owner.toString() !== req.userId) {
-            return res.status(403).json({ error: 'Only the owner can edit the list name' });
-        }
-    
-        list.name = name;
-        await list.save();
-        req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
-        res.json(list);
-        } catch (error) {
-        console.error('Update list name error:', error);
-        res.status(500).json({ error: 'Server error' });
-        }
-    });
-
-    // Add item to list
-    router.post('/lists/:uuid/items', verifyToken, async (req, res) => {
-        try {
-        const { name, category } = req.body;
-        if (!name || !name.trim()) {
-            return res.status(400).json({ error: 'Item name cannot be empty' });
-        }
-        const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-        if (!list) return res.status(404).json({ error: 'List not found' });
-    
-        if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
-            return res.status(403).json({ error: 'You do not have permission to edit this list' });
-        }
-    
-        if (!list.name) {
-            list.name = 'Unnamed List';
-        }
-    
-        list.items.push({ name, category: category || 'Groceries' });
-        await list.save();
-        req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
-        res.status(201).json(list);
-        } catch (error) {
-        console.error('Add item error:', error);
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ error: 'Validation failed: ' + error.message });
-        }
-        res.status(500).json({ error: 'Server error' });
-        }
-    });
-
-    router.patch('/lists/:uuid/items/:itemId', verifyToken, async (req, res) => {
-        try {
-        const { bought } = req.body;
-        const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-        if (!list) return res.status(404).json({ error: 'List not found' });
-    
-        // Check if the user is the owner or a collaborator
-        if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
-            return res.status(403).json({ error: 'You do not have permission to edit this list' });
-        }
-    
-        const item = list.items.id(req.params.itemId);
-        if (!item) return res.status(404).json({ error: 'Item not found' });
-    
-        // Ensure the list has a name
-        if (!list.name) {
-            list.name = 'Unnamed List';
-        }
-    
-        item.bought = bought;
-        await list.save();
-        req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
-        res.json(list);
-        } catch (error) {
-        console.error('Toggle item error:', error);
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ error: 'Validation failed: ' + error.message });
-        }
-        res.status(500).json({ error: 'Server error' });
-        }
-    });
-
-    // Delete list
-    router.delete('/lists/:uuid', verifyToken, async (req, res) => {
-        try {
-        const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-        if (!list) return res.status(404).json({ error: 'List not found' });
-    
-        // Check if the user is the owner (only the owner can delete the list)
-        if (list.owner.toString() !== req.userId) {
-            return res.status(403).json({ error: 'Only the owner can delete the list' });
-        }
-    
-        // Remove the list
-        await ShoppingList.deleteOne({ uuid: req.params.uuid });
-    
-        // Emit a listDeleted event to all connected clients in the room
-        req.app.get('io').to(req.params.uuid).emit('listDeleted', { uuid: req.params.uuid });
-    
-        res.json({ message: 'List deleted successfully' });
-        } catch (error) {
-        console.error('Delete list error:', error);
-        res.status(500).json({ error: 'Server error' });
-        }
-    });
-
-  router.delete('/lists/:uuid/items/:itemId', verifyToken, async (req, res) => {
-    try {
-      const list = await ShoppingList.findOne({ uuid: req.params.uuid });
-      if (!list) return res.status(404).json({ error: 'List not found' });
-  
-      // Check if the user is the owner or a collaborator
-      if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
-        return res.status(403).json({ error: 'You do not have permission to edit this list' });
-      }
-  
-      // Ensure the list has a name
-      if (!list.name) {
-        list.name = 'Unnamed List';
-      }
-  
-      list.items.pull(req.params.itemId);
-      await list.save();
-      req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
-      res.json(list);
-    } catch (error) {
-      console.error('Delete item error:', error);
-      if (error.name === 'ValidationError') {
-        return res.status(400).json({ error: 'Validation failed: ' + error.message });
-      }
-      res.status(500).json({ error: 'Server error' });
+// Update list name
+router.patch('/lists/:uuid', verifyToken, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'List name is required' });
     }
-  });
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+    if (list.owner.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Only the owner can edit the list name' });
+    }
 
+    list.name = name;
+    await list.save();
+    req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
+    res.json(list);
+  } catch (error) {
+    console.error('Update list name error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add item to list
+router.post('/lists/:uuid/items', verifyToken, async (req, res) => {
+  try {
+    const { name, category } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Item name cannot be empty' });
+    }
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+
+    if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
+      return res.status(403).json({ error: 'You do not have permission to edit this list' });
+    }
+
+    if (!list.name) {
+      list.name = 'Unnamed List';
+    }
+
+    list.items.push({ name, category: category || 'Groceries' });
+    await list.save();
+    req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
+    res.status(201).json(list);
+  } catch (error) {
+    console.error('Add item error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Validation failed: ' + error.message });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Toggle item (mark as bought)
+router.patch('/lists/:uuid/items/:itemId', verifyToken, async (req, res) => {
+  try {
+    const { bought } = req.body;
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+
+    if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
+      return res.status(403).json({ error: 'You do not have permission to edit this list' });
+    }
+
+    const item = list.items.id(req.params.itemId);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    if (!list.name) {
+      list.name = 'Unnamed List';
+    }
+
+    item.bought = bought;
+    await list.save();
+    req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
+    res.json(list);
+  } catch (error) {
+    console.error('Toggle item error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Validation failed: ' + error.message });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a list
+router.delete('/lists/:uuid', verifyToken, async (req, res) => {
+  try {
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+
+    if (list.owner.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Only the owner can delete the list' });
+    }
+
+    await ShoppingList.deleteOne({ uuid: req.params.uuid });
+    req.app.get('io').to(req.params.uuid).emit('listDeleted', { uuid: req.params.uuid });
+    res.json({ message: 'List deleted successfully' });
+  } catch (error) {
+    console.error('Delete list error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete an item from a list
+router.delete('/lists/:uuid/items/:itemId', verifyToken, async (req, res) => {
+  try {
+    const list = await ShoppingList.findOne({ uuid: req.params.uuid });
+    if (!list) return res.status(404).json({ error: 'List not found' });
+
+    if (list.owner.toString() !== req.userId && !list.collaborators.includes(req.userId)) {
+      return res.status(403).json({ error: 'You do not have permission to edit this list' });
+    }
+
+    if (!list.name) {
+      list.name = 'Unnamed List';
+    }
+
+    list.items.pull(req.params.itemId);
+    await list.save();
+    req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
+    res.json(list);
+  } catch (error) {
+    console.error('Delete item error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Validation failed: ' + error.message });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user's own lists
 router.get('/user/lists', verifyToken, async (req, res) => {
   try {
     console.log('Fetching lists for user:', req.userId);
@@ -270,6 +269,7 @@ router.get('/user/lists', verifyToken, async (req, res) => {
   }
 });
 
+// Invite a collaborator
 router.post('/lists/:uuid/invite', verifyToken, async (req, res) => {
   try {
     const { email } = req.body;
@@ -289,13 +289,13 @@ router.post('/lists/:uuid/invite', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'User is already a collaborator' });
     }
 
-    // Ensure the list has a name
     if (!list.name) {
       list.name = 'Unnamed List';
     }
 
     list.collaborators.push(user._id);
     await list.save();
+    req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
     res.json({ message: 'Collaborator added successfully' });
   } catch (error) {
     console.error('Invite collaborator error:', error);
@@ -306,6 +306,7 @@ router.post('/lists/:uuid/invite', verifyToken, async (req, res) => {
   }
 });
 
+// Get shared lists
 router.get('/shared/lists', verifyToken, async (req, res) => {
   try {
     const lists = await ShoppingList.find({ collaborators: req.userId });
@@ -316,6 +317,7 @@ router.get('/shared/lists', verifyToken, async (req, res) => {
   }
 });
 
+// AI suggestion endpoint
 router.post('/ai-suggest', async (req, res) => {
   try {
     const { query } = req.body;

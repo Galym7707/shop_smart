@@ -10,16 +10,25 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://shop-smart-git-main-galym7707s-projects.vercel.app',
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   },
 });
 
+// CORS for Express
 app.use(cors({ origin: 'https://shop-smart-git-main-galym7707s-projects.vercel.app' }));
 app.use(express.json());
+
+// Connect to MongoDB
 connectDB();
+
+// Mount API routes
 app.use('/api', apiRoutes);
 
+// Set io for use in routes
+app.set('io', io);
+
+// Socket.IO connection handling
 io.on('connection', (socket) => {
   socket.on('joinList', (uuid) => {
     socket.join(uuid);
@@ -27,16 +36,9 @@ io.on('connection', (socket) => {
   });
 });
 
-app.set('io', io);
-
-app.use('/api/lists/:uuid', async (req, res, next) => {
-  if (['POST', 'PATCH', 'DELETE'].includes(req.method)) {
-    const list = await require('./models/ShoppingList').findOne({ uuid: req.params.uuid });
-    if (list) {
-      req.app.get('io').to(req.params.uuid).emit('listUpdate', list);
-    }
-  }
-  next();
+// Basic health check endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'ShopSmart Backend is running' });
 });
 
 const PORT = process.env.PORT || 5000;
