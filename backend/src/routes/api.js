@@ -89,6 +89,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/test', (req, res) => {
+  res.json({ message: 'API routes are working' });
+});
+
 // Get a specific list
 router.get('/lists/:uuid', verifyToken, async (req, res) => {
   try {

@@ -30,7 +30,7 @@ app.use(express.json());
 
 // Connect to MongoDB
 connectDB();
-
+console.log('API routes loaded:', apiRoutes);
 // Mount API routes
 app.use('/api', apiRoutes);
 
