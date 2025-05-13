@@ -15,7 +15,7 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors());
+app.use(cors({ origin: 'https://shop-smart-git-main-galym7707s-projects.vercel.app' }));
 app.use(express.json());
 connectDB();
 app.use('/api', apiRoutes);
