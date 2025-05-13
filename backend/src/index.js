@@ -15,7 +15,6 @@ const io = new Server(server, {
   },
 });
 
-// CORS for Express (support multiple origins)
 const allowedOrigins = ['https://shop-smart-git-main-galym7707s-projects.vercel.app', 'https://shop-smart-one.vercel.app'];
 app.use(cors({
   origin: (origin, callback) => {
@@ -30,8 +29,10 @@ app.use(express.json());
 
 // Connect to MongoDB
 connectDB();
-console.log('API routes loaded:', apiRoutes);
-// Mount API routes
+
+// Debug: Log routes
+console.log('Loading API routes...');
+console.log('API routes:', apiRoutes);
 app.use('/api', apiRoutes);
 
 // Set io for use in routes

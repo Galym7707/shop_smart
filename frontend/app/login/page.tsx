@@ -22,7 +22,7 @@ export default function Login() {
     setSuccess('');
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
-      const loginUrl = `${apiUrl}/api/login`;
+      const loginUrl = 'https://shopsmart-production.up.railway.app/api/login';
       console.log('Attempting login at:', loginUrl);
       const response = await axios.post(loginUrl, formData);
       localStorage.setItem('token', response.data.token);
