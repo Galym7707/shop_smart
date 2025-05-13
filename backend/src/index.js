@@ -10,13 +10,22 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://shop-smart-git-main-galym7707s-projects.vercel.app',
+    origin: ['https://shop-smart-git-main-galym7707s-projects.vercel.app', 'https://shop-smart-one.vercel.app'],
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   },
 });
 
-// CORS for Express
-app.use(cors({ origin: 'https://shop-smart-git-main-galym7707s-projects.vercel.app' }));
+// CORS for Express (support multiple origins)
+const allowedOrigins = ['https://shop-smart-git-main-galym7707s-projects.vercel.app', 'https://shop-smart-one.vercel.app'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+}));
 app.use(express.json());
 
 // Connect to MongoDB

@@ -21,13 +21,11 @@ export default function Register() {
     setError('');
     setSuccess('');
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/register`, formData);
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/api/register`, formData);
       setSuccess('Registration successful! Redirecting to login...');
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+      router.push('/login');
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'An unexpected error occurred. Please try again.';
+      const errorMessage = err.response?.data?.error || err.message || 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
       console.error('Registration error:', err.response || err);
     }
