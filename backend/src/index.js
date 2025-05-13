@@ -51,5 +51,21 @@ app.get('/', (req, res) => {
   res.json({ message: 'ShopSmart Backend is running' });
 });
 
+app.options('/api/login', cors({
+  origin: (origin, callback) => {
+    console.log('CORS preflight for /api/login from origin:', origin);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+}));
+
+app.post('/api/test-login', (req, res) => {
+  res.json({ message: 'Test login route works' });
+});
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+console.log('Forcing full redeployment at', new Date().toISOString());
