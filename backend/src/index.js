@@ -30,6 +30,8 @@ app.use(express.json());
 // Middleware для логирования всех запросов
 app.use((req, res, next) => {
   console.log(`Получен запрос: ${req.method} ${req.url}`);
+  req.url = req.url.replace(/\/+/g, '/');
+  console.log(`Нормализованный URL: ${req.url}`);
   next();
 });
 
@@ -82,3 +84,6 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 console.log('Forcing full redeployment at', new Date().toISOString());
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
+const loginUrl = `${apiUrl}/api/login`;
