@@ -82,7 +82,10 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Server successfully started');
+});
 console.log('Forcing full redeployment at', new Date().toISOString());
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
