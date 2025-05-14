@@ -27,6 +27,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Middleware для логирования всех запросов
+app.use((req, res, next) => {
+  console.log(`Получен запрос: ${req.method} ${req.url}`);
+  next();
+});
+
 // Connect to MongoDB
 connectDB();
 
@@ -63,7 +69,14 @@ app.options('/api/login', cors({
 }));
 
 app.post('/api/test-login', (req, res) => {
-  res.json({ message: 'Test login route works' });
+  console.log('Тестовый маршрут вызван');
+  res.json({ message: 'Тестовый маршрут работает' });
+});
+
+// Catch-all маршрут для отладки
+app.use((req, res) => {
+  console.log(`Маршрут не найден для: ${req.method} ${req.url}`);
+  res.status(404).json({ error: 'Not Found' });
 });
 
 const PORT = process.env.PORT || 5000;

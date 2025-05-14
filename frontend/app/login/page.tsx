@@ -22,9 +22,12 @@ export default function Login() {
     setSuccess('');
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
-      const loginUrl = 'https://shopsmart-production.up.railway.app/api/login';
-      console.log('Attempting login at:', loginUrl);
-      const response = await axios.post(loginUrl, formData);
+      const loginUrl = `${apiUrl}/api/login`;
+      console.log('Попытка входа по адресу:', loginUrl);
+      const response = await axios.post(loginUrl, {
+        email: "your_email@example.com",
+        password: "your_password"
+      });
       localStorage.setItem('token', response.data.token);
       setSuccess('Login successful! Redirecting...');
       router.push('/');
@@ -86,7 +89,7 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
           <p className="mt-4 text-center text-gray-600">
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <Link href="/register" className="text-primary hover:underline">
               Register
             </Link>
