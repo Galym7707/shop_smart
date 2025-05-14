@@ -40,7 +40,7 @@ connectDB();
 
 // Debug: Log routes
 console.log('Loading API routes...');
-// console.log('API routes:', apiRoutes);
+// console.log('API routes:', apiRoutes); // Закомментировано для предотвращения краша
 app.use('/api', apiRoutes);
 
 // Set io for use in routes
@@ -87,6 +87,3 @@ server.listen(PORT, () => {
   console.log('Server successfully started');
 });
 console.log('Forcing full redeployment at', new Date().toISOString());
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
-const loginUrl = `${apiUrl}/api/login`;
