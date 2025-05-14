@@ -25,8 +25,8 @@ export default function Login() {
       const loginUrl = `${apiUrl}/api/login`;
       console.log('Попытка входа по адресу:', loginUrl);
       const response = await axios.post(loginUrl, {
-        email: "your_email@example.com",
-        password: "your_password"
+        email: formData.email,
+        password: formData.password
       });
       localStorage.setItem('token', response.data.token);
       setSuccess('Login successful! Redirecting...');

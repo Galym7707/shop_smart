@@ -40,7 +40,7 @@ connectDB();
 
 // Debug: Log routes
 console.log('Loading API routes...');
-console.log('API routes:', apiRoutes);
+// console.log('API routes:', apiRoutes);
 app.use('/api', apiRoutes);
 
 // Set io for use in routes
