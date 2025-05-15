@@ -9,9 +9,39 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.light {
   background-color: #f9fafb;
+  color: #1a1a1a;
+}
+
+.dark {
+  background-color: #1f2937;
+  color: #f9fafb;
 }
 
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl;
+}
+
+.input {
+  @apply border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+}
+
+.button {
+  @apply bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 disabled:opacity-50;
+}
+
+.header {
+  @apply bg-blue-600 dark:bg-gray-900 text-white py-4 shadow-md;
+}
+
+h1, h2 {
+  @apply font-bold tracking-tight;
 }
