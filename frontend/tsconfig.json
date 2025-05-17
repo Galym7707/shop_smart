@@ -3,13 +3,13 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true, // Рекомендуется установить true для лучшей проверки типов
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "incremental": true,
     "module": "esnext",
     "esModuleInterop": true,
-    "moduleResolution": "bundler", // "bundler" рекомендуется для Next.js 13.4+; "node" тоже может работать
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -18,18 +18,14 @@
         "name": "next"
       }
     ],
-    // --- ВАЖНО: Настройка алиасов пути ---
-    "baseUrl": ".", // Указывает, что базовая директория - это корень проекта (где лежит tsconfig.json)
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"] // Разрешает @/components/* как ./components/*, @/context/* как ./context/* и т.д.
-                      // Убедись, что папки components, context, lib и т.д. находятся в корне frontend/
-                      // Если они в frontend/src/, то здесь должно быть "@/*": ["./src/*"]
+      "@/*": ["./*"]
     }
-    // --- Конец настройки алиасов ---
   },
   "include": [
     "next-env.d.ts",
-    ".next/types/**/*.ts", // Добавлено для типов, генерируемых Next.js
+    ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
   ],
