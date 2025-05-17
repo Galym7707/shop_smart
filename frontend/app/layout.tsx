@@ -1,11 +1,12 @@
 // frontend/app/layout.tsx
+// Triggering new build.
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header"; // Убедись, что путь к Header правильный
-import Footer from "@/components/Footer"; // Убедись, что путь к Footer правильный
-import { AuthProvider } from "@/context/AuthContext"; // Путь к AuthContext
-import { ThemeProvider } from "@/context/ThemeContext"; // Путь к ThemeContext
+import Header from '../components/Header'; // Путь может быть ../components или ./components в зависимости от точной структуры
+import Footer from '../components/Footer';
+import { AuthProvider } from '../context/AuthContext';
+import { ThemeProvider } from '../context/ThemeContext';
 
 const inter = Inter({ subsets: ["latin"] });
 
