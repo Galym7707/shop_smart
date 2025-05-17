@@ -1,13 +1,12 @@
 // frontend/components/ShoppingList.tsx
 "use client";
 
-import { useState, useEffect, FormEvent } from 'react'; // Добавлен FormEvent
-import { io, Socket } from 'socket.io-client';      // Импортирован тип Socket
+import { useState, useEffect, FormEvent } from 'react';
+import { io, Socket } from 'socket.io-client';
 import axios from 'axios';
-import { useAuth } from '@/context/AuthContext'; // Для получения токена, если потребуется для сокетов
+import { useAuth } from '../context/AuthContext'; // Изменено с @/context/AuthContext
 import { useRouter } from 'next/navigation';
 
-// Используем переменную окружения для URL API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface ShoppingListItem {
@@ -20,59 +19,43 @@ interface ShoppingListProps {
     uuid: string;
 }
 
-// Изменено на export default, если это основной экспорт файла
 export default function ShoppingList({ uuid }: ShoppingListProps) {
     const { token, isAuthenticated, loading: authLoading } = useAuth();
     const router = useRouter();
 
     const [items, setItems] = useState<ShoppingListItem[]>([]);
-    const [newItemName, setNewItemName] = useState(''); // Переименовано для ясности
+    const [newItemName, setNewItemName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [listTitle, setListTitle] = useState<string>('Shopping List'); // Для названия списка
+    const [listTitle, setListTitle] = useState<string>('Shopping List');
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
-            // Если список приватный и требует аутентификации для просмотра
-            // router.push('/login'); 
-            // Если списки могут быть публичными, то эта проверка не нужна здесь,
-            // а только для действий, требующих аутентификации.
+            // Логика перенаправления, если список приватный
         }
     }, [authLoading, isAuthenticated, router]);
 
-
     useEffect(() => {
-        if (!uuid) return; // Не делаем ничего, если uuid не предоставлен
+        if (!uuid) return;
 
-        // URL для сокетов может отличаться от HTTP URL, если API_BASE_URL его не включает
-        // Обычно это тот же базовый URL без /api
-        // Например, если API_BASE_URL = 'https://your-backend.up.railway.app/api',
-        // то SOCKET_URL может быть 'https://your-backend.up.railway.app'
-        // Для простоты, если API_BASE_URL уже является базовым URL сервера (без /api), то можно использовать его.
-        // Если NEXT_PUBLIC_API_URL = http://localhost:8080/api, то для сокета нужен http://localhost:8080
         const socketUrl = API_BASE_URL?.replace('/api', '') || 'http://localhost:8080';
-        
-        const socket: Socket = io(socketUrl, {
-            // query: { token } // Раскомментируй, если бэкенд ожидает токен при подключении сокета
-            // auth: { token } // Альтернативный способ передачи токена для Socket.IO v3+
-        });
+        const socket: Socket = io(socketUrl);
 
         socket.emit('joinList', uuid);
-        console.log(`Socket: Emitted joinList for ${uuid}`);
 
         const fetchList = async () => {
             setLoading(true);
             try {
                 const response = await axios.get(`${API_BASE_URL}/api/lists/${uuid}`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {}, // Добавляем токен, если есть (для приватных списков)
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
                 setItems(response.data.items || []);
-                setListTitle(response.data.name || `List ${uuid.substring(0,6)}...`); // Устанавливаем название списка
+                setListTitle(response.data.name || `List ${uuid.substring(0,6)}...`);
                 setError('');
             } catch (err: any) {
                 console.error('Failed to load list:', err);
-                setError(err.response?.data?.message || 'Failed to load list. It might be private or not exist.');
-                setItems([]); // Очищаем элементы в случае ошибки
+                setError(err.response?.data?.message || 'Failed to load list.');
+                setItems([]);
             } finally {
                 setLoading(false);
             }
@@ -80,39 +63,33 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
         fetchList();
 
         socket.on('listUpdate', (updatedListData: { name?: string, items: ShoppingListItem[] }) => {
-            console.log('Socket: Received listUpdate', updatedListData);
             setItems(updatedListData.items || []);
             if(updatedListData.name) setListTitle(updatedListData.name);
         });
         
         socket.on('itemAdded', (addedItem: ShoppingListItem) => {
-            console.log('Socket: Received itemAdded', addedItem);
             setItems(prevItems => [...prevItems, addedItem]);
         });
 
         socket.on('itemUpdated', (updatedItem: ShoppingListItem) => {
-            console.log('Socket: Received itemUpdated', updatedItem);
             setItems(prevItems => prevItems.map(item => item._id === updatedItem._id ? updatedItem : item));
         });
 
         socket.on('itemDeleted', (deletedItemId: string) => {
-            console.log('Socket: Received itemDeleted', deletedItemId);
             setItems(prevItems => prevItems.filter(item => item._id !== deletedItemId));
         });
         
         socket.on('connect_error', (err) => {
             console.error("Socket connection error:", err.message);
-            setError("Failed to connect to real-time updates. Please check your connection or try refreshing.");
+            setError("Failed to connect to real-time updates.");
         });
 
-
         return () => {
-            console.log(`Socket: Disconnecting from list ${uuid}`);
             socket.disconnect();
         };
-    }, [uuid, token]); // Добавлен token в зависимости, если он используется для подключения сокета
+    }, [uuid, token, API_BASE_URL]); // Добавил API_BASE_URL в зависимости
 
-    const handleAddItem = async (e: FormEvent<HTMLFormElement>) => { // Добавлен тип для 'e'
+    const handleAddItem = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newItemName.trim()) {
             setError('Item name cannot be empty');
@@ -123,22 +100,16 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
             return;
         }
         try {
-            // Оптимистичное обновление (опционально, для лучшего UX)
-            // const tempId = Date.now().toString();
-            // setItems(prev => [...prev, { _id: tempId, name: newItemName, bought: false }]);
-            
             await axios.post(
                 `${API_BASE_URL}/api/lists/${uuid}/items`,
                 { name: newItemName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            setNewItemName(''); // Очищаем поле после успешной отправки (бэкенд должен прислать обновление через сокет)
+            setNewItemName('');
             setError('');
         } catch (err: any) {
             console.error('Failed to add item:', err);
             setError(err.response?.data?.message || 'Failed to add item.');
-            // Откат оптимистичного обновления, если используется
-            // setItems(prev => prev.filter(item => item._id !== tempId));
         }
     };
 
@@ -156,7 +127,6 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
                 { bought: !itemToUpdate.bought },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            // Обновление придет через сокет
         } catch (err: any) {
             console.error('Failed to update item:', err);
             setError(err.response?.data?.message || 'Failed to update item.');
@@ -173,14 +143,13 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
                 `${API_BASE_URL}/api/lists/${uuid}/items/${itemId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            // Обновление придет через сокет
         } catch (err: any) {
             console.error('Failed to delete item:', err);
             setError(err.response?.data?.message || 'Failed to delete item.');
         }
     };
 
-    if (loading) {
+    if (loading && authLoading) { // Учитываем обе загрузки
         return (
             <div className="flex justify-center items-center min-h-[calc(100vh-400px)]">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 dark:border-blue-300"></div>
@@ -188,12 +157,6 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
             </div>
         );
     }
-    
-    // Ошибка отображается даже если есть элементы, но поверх списка
-    // if (error && items.length === 0) { 
-    //     return <p className="text-red-500 dark:text-red-400 text-center py-10 text-lg">{error}</p>;
-    // }
-
 
     return (
         <section className="py-10 md:py-16">
@@ -240,11 +203,11 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
                                 >
                                     <span 
                                         className={`flex-1 cursor-pointer ${item.bought ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}
-                                        onClick={() => isAuthenticated && handleToggleBought(item._id)} // Позволяем кликать только аутентифицированным
+                                        onClick={() => isAuthenticated && handleToggleBought(item._id)}
                                     >
                                         {item.name}
                                     </span>
-                                    {isAuthenticated && ( // Кнопки действий только для аутентифицированных
+                                    {isAuthenticated && (
                                         <div className="flex items-center gap-2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <button
                                                 onClick={() => handleToggleBought(item._id)}
@@ -255,7 +218,6 @@ export default function ShoppingList({ uuid }: ShoppingListProps) {
                                                         : 'text-green-600 hover:bg-green-200 dark:hover:bg-green-700'
                                                     }`}
                                             >
-                                                {/* Можно использовать иконки */}
                                                 {item.bought ? '↩️' : '✔️'} 
                                             </button>
                                             <button

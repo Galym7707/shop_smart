@@ -1,16 +1,12 @@
 // frontend/app/ai-suggest/page.tsx
 "use client";
 
-import { useState, useEffect, FormEvent } from 'react'; // Добавлен FormEvent
+import { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';       // Убедись, что путь к AuthContext правильный
+import { useAuth } from '../../context/AuthContext'; // Изменено с @/context/AuthContext (два уровня вверх)
 import { useRouter } from 'next/navigation';
 
-// Используем переменную окружения для URL API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL; 
-// Предполагаем, что NEXT_PUBLIC_API_URL = http://localhost:8080 или https://your-backend.up.railway.app
-// и что сам путь /api уже включен в эту переменную или будет добавлен к конкретному эндпоинту.
-// Если NEXT_PUBLIC_API_URL не включает /api, то нужно будет `${API_BASE_URL}/api/ai/suggest-list`
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function AISuggestPage() {
     const { token, loading: authLoading, isAuthenticated } = useAuth();
@@ -27,16 +23,15 @@ export default function AISuggestPage() {
         }
     }, [authLoading, isAuthenticated, router]);
 
-    // Явно указываем тип для 'e'
     const handleSuggest = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!query.trim()) {
             setError('Query cannot be empty.');
             return;
         }
-        if (!isAuthenticated || !token) { // Дополнительная проверка на isAuthenticated
+        if (!isAuthenticated || !token) {
             setError('You must be logged in to get AI suggestions.');
-            router.push('/login'); // Перенаправляем на логин, если не аутентифицирован
+            router.push('/login');
             return;
         }
 
@@ -45,20 +40,17 @@ export default function AISuggestPage() {
         setSuggestions([]);
 
         try {
-            // Убедись, что эндпоинт правильный и соответствует твоему бэкенду
             const response = await axios.post(
-                `${API_BASE_URL}/api/ai/suggest-list`, // Используем /api/ai/suggest-list как обсуждали ранее
+                `${API_BASE_URL}/api/ai/suggest-list`,
                 { query },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
-            // Более надежная проверка ответа
             if (response.data && Array.isArray(response.data.items)) {
                 setSuggestions(response.data.items);
-            } else if (response.data && Array.isArray(response.data.suggestions)) { // Обработка альтернативного ключа
+            } else if (response.data && Array.isArray(response.data.suggestions)) {
                  setSuggestions(response.data.suggestions);
-            }
-             else {
+            } else {
                 console.warn("AI Suggestion response format is unexpected:", response.data);
                 setError("Received an unexpected format for suggestions.");
                 setSuggestions([]);
@@ -69,8 +61,7 @@ export default function AISuggestPage() {
                 setError(err.response.data.message);
             } else if (err.message) {
                 setError(err.message);
-            }
-            else {
+            } else {
                 setError('Failed to get AI suggestions. Please try again.');
             }
         } finally {

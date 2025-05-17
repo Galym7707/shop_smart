@@ -2,10 +2,10 @@
 "use client";
 
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext'; // Используем AuthContext
-import ThemeSwitcher from './ThemeSwitcher';    // Импортируем ThemeSwitcher
+import { useAuth } from '../context/AuthContext'; // Изменено с @/context/AuthContext
+import ThemeSwitcher from './ThemeSwitcher';    // Этот путь уже был относительным
 
-export default function Header() { // Изменено на export default
+export default function Header() {
     const { user, logout, loading, isAuthenticated } = useAuth();
 
     return (
@@ -28,7 +28,7 @@ export default function Header() { // Изменено на export default
                         isAuthenticated && user ? (
                             <>
                                 <Link href="/profile" className="text-sm sm:text-base hover:text-blue-300 transition-colors">
-                                    {user.username || user.email.split('@')[0]} {/* Показываем username или часть email */}
+                                    {user.username || user.email.split('@')[0]}
                                 </Link>
                                 <button
                                     onClick={logout}
