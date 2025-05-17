@@ -1,8 +1,9 @@
 // frontend/components/ThemeSwitcher.tsx
 "use client";
 
-import { useTheme } from '../context/ThemeContext'; // Змінено на відносний шлях
-import { Sun, Moon } from 'lucide-react'; 
+// Убедись, что импорт относительный, если ты перешел на относительные пути для контекста
+import { useTheme } from '../context/ThemeContext'; 
+import { Sun, Moon } from 'lucide-react'; // Вот здесь используется lucide-react
 
 export default function ThemeSwitcher() {
     const { theme, toggleTheme } = useTheme();
