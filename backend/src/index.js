@@ -10,20 +10,33 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['https://shop-smart-git-main-galym7707s-projects.vercel.app', 'https://shop-smart-one.vercel.app'],
+    origin: [
+      'https://shop-smart-git-main-galym7707s-projects.vercel.app',
+      'https://shop-smart-one.vercel.app',
+      'https://shop-smart-csztoe8bq-galym7707s-projects.vercel.app',
+    ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   },
 });
 
-const allowedOrigins = ['https://shop-smart-git-main-galym7707s-projects.vercel.app', 'https://shop-smart-one.vercel.app'];
+// Список разрешенных доменов
+const allowedOrigins = [
+  'https://shop-smart-git-main-galym7707s-projects.vercel.app',
+  'https://shop-smart-one.vercel.app',
+  'https://shop-smart-csztoe8bq-galym7707s-projects.vercel.app',
+];
+
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: function(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 app.use(express.json());
 
