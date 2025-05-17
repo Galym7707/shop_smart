@@ -48,6 +48,9 @@ export function Header({ toggleTheme, theme }) {
                 <Link href="/lists" className="hover:text-secondary transition duration-200">
                   My Lists
                 </Link>
+                <Link href="/profile" className="hover:text-secondary transition duration-200">
+                  Profile
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="hover:text-secondary transition duration-200"

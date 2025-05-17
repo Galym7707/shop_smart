@@ -41,9 +41,9 @@ export default function Home() {
   };
 
   const fetchLists = async () => {
-    console.log('Fetching lists with token');
+    let token = localStorage.getItem('token');
+    console.log('Fetching lists with token:', token);
     try {
-      let token = localStorage.getItem('token');
       if (!token) throw new Error('No token found');
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/lists`, {
@@ -51,7 +51,8 @@ export default function Home() {
         });
         setLists(response.data);
       } catch (err) {
-        if (err.response?.data?.error === 'Invalid token' || err.message.includes('expired')) {
+        if (err.response?.status === 401) {
+          console.log('Token invalid or expired, trying to refresh');
           token = await refreshToken();
           const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/lists`, {
             headers: { Authorization: `Bearer ${token}` },

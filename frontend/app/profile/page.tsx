@@ -23,33 +23,16 @@ export default function Profile() {
     fetchUser();
   }, []);
 
-  if (error) {
-    return (
-      <section className="py-20">
-        <div className="container">
-          <p className="text-red-500 text-center">{error}</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (!user) {
-    return (
-      <section className="py-20">
-        <div className="container">
-          <p className="text-center">Loading...</p>
-        </div>
-      </section>
-    );
-  }
+  if (error) return <p className="text-red-500">{error}</p>;
+  if (!user) return <p>Loading...</p>;
 
   return (
-    <section className="py-20">
+    <section className="py-20 bg-white">
       <div className="container">
-        <h1 className="text-4xl text-center mb-12">Your Profile</h1>
-        <div className="card max-w-md mx-auto">
-          <p className="text-lg mb-4">Nickname: {user.name}</p>
-          <p className="text-lg">Email: {user.email}</p>
+        <h1 className="text-4xl font-bold text-center mb-12 text-gray-800">Profile</h1>
+        <div className="max-w-md mx-auto">
+          <p><strong>Name:</strong> {user.name}</p>
+          <p><strong>Email:</strong> {user.email}</p>
         </div>
       </div>
     </section>
