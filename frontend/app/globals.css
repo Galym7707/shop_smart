@@ -10,6 +10,7 @@ body {
   padding: 0;
   box-sizing: border-box;
   transition: background-color 0.3s, color 0.3s;
+  background-color: red;
 }
 
 .light {
