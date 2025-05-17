@@ -1,82 +1,59 @@
-'use client';
-import { useState, useEffect } from 'react';
+// frontend/components/Header.tsx
+"use client";
+
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext'; // Используем AuthContext
+import ThemeSwitcher from './ThemeSwitcher';    // Импортируем ThemeSwitcher
 
-export function Header({ toggleTheme, theme }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export default function Header() { // Изменено на export default
+    const { user, logout, loading, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    // Проверяем токен при монтировании
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-
-    // Слушаем изменения в localStorage (например, после логина)
-    const handleStorageChange = () => {
-      const newToken = localStorage.getItem('token');
-      setIsLoggedIn(!!newToken);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken'); // Удаляем и refresh-токен
-    setIsLoggedIn(false);
-    window.location.href = '/';
-  };
-
-  return (
-    <header className={`bg-primary ${theme === 'dark' ? 'dark:bg-gray-900' : ''} text-white py-6 sticky top-0 z-50 shadow-md transition-colors duration-300`}>
-      <div className="container flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-          <Link href="/" className="hover:text-secondary transition duration-200">
-            ShopSmart
-          </Link>
-        </h1>
-        <div className="flex items-center space-x-6">
-          <nav className="space-x-6">
-            <Link href="/" className="hover:text-secondary transition duration-200">
-              Home
-            </Link>
-            <Link href="/ai-suggest" className="hover:text-secondary transition duration-200">
-              AI Suggest
-            </Link>
-            {isLoggedIn ? (
-              <>
-                <Link href="/lists" className="hover:text-secondary transition duration-200">
-                  My Lists
+    return (
+        <header className="bg-gray-700 dark:bg-gray-900 text-white shadow-lg sticky top-0 z-50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <Link href="/" className="text-xl sm:text-2xl font-bold text-blue-300 hover:text-blue-200 transition-colors">
+                    ShopSmart
                 </Link>
-                <Link href="/profile" className="hover:text-secondary transition duration-200">
-                  Profile
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="hover:text-secondary transition duration-200"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="hover:text-secondary transition duration-200">
-                  Login
-                </Link>
-                <Link href="/register" className="hover:text-secondary transition duration-200">
-                  Register
-                </Link>
-              </>
-            )}
-          </nav>
-          <button
-            onClick={toggleTheme}
-            className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-200"
-          >
-            {theme === 'light' ? 'Dark' : 'Light'}
-          </button>
-        </div>
-      </div>
-    </header>
-  );
+                <nav className="flex items-center space-x-2 sm:space-x-4">
+                    <Link href="/lists" className="text-sm sm:text-base hover:text-blue-300 transition-colors">
+                        My Lists
+                    </Link>
+                    <Link href="/ai-suggest" className="text-sm sm:text-base hover:text-blue-300 transition-colors">
+                        AI Suggest
+                    </Link>
+                    
+                    <ThemeSwitcher />
+
+                    {!loading && (
+                        isAuthenticated && user ? (
+                            <>
+                                <Link href="/profile" className="text-sm sm:text-base hover:text-blue-300 transition-colors">
+                                    {user.username || user.email.split('@')[0]} {/* Показываем username или часть email */}
+                                </Link>
+                                <button
+                                    onClick={logout}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-md text-xs sm:text-sm transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-sm sm:text-base hover:text-blue-300 transition-colors">
+                                    Login
+                                </Link>
+                                <Link 
+                                    href="/register" 
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-md text-xs sm:text-sm transition-colors"
+                                >
+                                    Register
+                                </Link>
+                            </>
+                        )
+                    )}
+                    {loading && <div className="text-xs sm:text-sm text-gray-400">Loading...</div>}
+                </nav>
+            </div>
+        </header>
+    );
 }
