@@ -1,8 +1,13 @@
 // frontend/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "./globals.css"; // Этот путь уже относительный и должен работать
+
 // Используем относительные пути
+// Файл layout.tsx находится в frontend/app/
+// Папки components и context находятся в frontend/
+// Значит, чтобы из frontend/app/ добраться до frontend/components/,
+// нужно подняться на один уровень вверх ('../') и затем зайти в 'components'.
 import Header from '../components/Header'; 
 import Footer from '../components/Footer';
 import { AuthProvider } from '../context/AuthContext';
