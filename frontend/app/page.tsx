@@ -20,12 +20,45 @@ export default function Home() {
     }
   }, []);
 
+  const refreshToken = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) throw new Error('No refresh token');
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/refresh-token`, {}, {
+        headers: { 'x-refresh-token': refreshToken },
+      });
+      const newAccessToken = response.data.accessToken;
+      localStorage.setItem('token', newAccessToken);
+      return newAccessToken;
+    } catch (err) {
+      console.error('Refresh token error:', err);
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      setIsAuthenticated(false);
+      throw new Error('Failed to refresh token');
+    }
+  };
+
   const fetchLists = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/lists`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setLists(response.data);
+      let token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/lists`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setLists(response.data);
+      } catch (err) {
+        if (err.response?.data?.error === 'Invalid token' || err.message.includes('expired')) {
+          token = await refreshToken();
+          const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/lists`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setLists(response.data);
+        } else {
+          throw err;
+        }
+      }
     } catch (err) {
       console.error('Fetch lists error:', err);
       setError('Failed to load lists');
@@ -34,10 +67,24 @@ export default function Home() {
 
   const fetchSharedLists = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/shared/lists`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setSharedLists(response.data);
+      let token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/shared/lists`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSharedLists(response.data);
+      } catch (err) {
+        if (err.response?.data?.error === 'Invalid token' || err.message.includes('expired')) {
+          token = await refreshToken();
+          const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/shared/lists`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setSharedLists(response.data);
+        } else {
+          throw err;
+        }
+      }
     } catch (err) {
       console.error('Fetch shared lists error:', err);
       setError('Failed to load shared lists');
@@ -53,13 +100,30 @@ export default function Home() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lists`,
-        { name: listName },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      setLists([...lists, { uuid: response.data.uuid, name: listName }]);
-      setListName('');
+      let token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/lists`,
+          { name: listName },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setLists([...lists, { uuid: response.data.uuid, name: listName }]);
+        setListName('');
+      } catch (err) {
+        if (err.response?.data?.error === 'Invalid token' || err.message.includes('expired')) {
+          token = await refreshToken();
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/lists`,
+            { name: listName },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setLists([...lists, { uuid: response.data.uuid, name: listName }]);
+          setListName('');
+        } else {
+          throw err;
+        }
+      }
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Failed to create list';
       setError(errorMessage);
@@ -70,6 +134,7 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     setIsAuthenticated(false);
     setLists([]);
     setSharedLists([]);
