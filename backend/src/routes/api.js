@@ -27,6 +27,33 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// Middleware для проверки refresh-токена
+const verifyRefreshToken = (req, res, next) => {
+  const refreshToken = req.headers['x-refresh-token'];
+  if (!refreshToken) return res.status(401).json({ error: 'No refresh token provided' });
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+};
+
+// Endpoint для обновления токена
+router.post('/refresh-token', verifyRefreshToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.refreshToken) return res.status(404).json({ error: 'User not found' });
+
+    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ accessToken });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Register a new user
 router.post('/register', async (req, res) => {
   try {
@@ -61,28 +88,21 @@ router.post('/register', async (req, res) => {
 // Login a user
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login route called with body:', req.body);
     const { email, password } = req.body;
     if (!email || !password) {
-      console.log('Validation failed: Missing fields');
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    console.log('Finding user...');
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log('User not found:', email);
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-    console.log('Comparing passwords...');
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log('Password mismatch for user:', email);
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-    console.log('Generating JWT...');
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log('User logged in successfully:', email);
-    res.json({ token, user: { name: user.name, email } });
+    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const refreshToken = jwt.sign({ userId: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    user.refreshToken = refreshToken; // Сохраняем refresh-токен в базе
+    await user.save();
+
+    res.json({ accessToken, refreshToken });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Server error' });

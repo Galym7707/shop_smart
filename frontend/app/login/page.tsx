@@ -26,6 +26,7 @@ export default function Login() {
       });
       localStorage.setItem('token', response.data.accessToken);
       localStorage.setItem('refreshToken', response.data.refreshToken);
+      window.dispatchEvent(new Event('storage'));
       router.push('/');
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Login failed';

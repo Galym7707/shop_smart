@@ -1,3 +1,4 @@
+'use client';
 import './globals.css';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -15,19 +16,19 @@ export default function RootLayout({ children }) {
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'light';
     setTheme(storedTheme);
-    document.body.className = storedTheme;
+    document.documentElement.className = storedTheme; // Используем document.documentElement вместо document.body
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    document.body.className = newTheme;
+    document.documentElement.className = newTheme;
   };
 
   return (
     <html lang="en">
-      <body className={theme}>
+      <body>
         <Header toggleTheme={toggleTheme} theme={theme} />
         {children}
         <Footer />

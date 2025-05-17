@@ -6,12 +6,23 @@ export function Header({ toggleTheme, theme }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // Проверяем токен при монтировании
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+
+    // Слушаем изменения в localStorage (например, после логина)
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('token');
+      setIsLoggedIn(!!newToken);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken'); // Удаляем и refresh-токен
     setIsLoggedIn(false);
     window.location.href = '/';
   };

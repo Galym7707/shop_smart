@@ -21,6 +21,7 @@ export default function Home() {
   }, []);
 
   const refreshToken = async () => {
+    console.log('Trying to refresh token');
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) throw new Error('No refresh token');
     try {
@@ -40,6 +41,7 @@ export default function Home() {
   };
 
   const fetchLists = async () => {
+    console.log('Fetching lists with token');
     try {
       let token = localStorage.getItem('token');
       if (!token) throw new Error('No token found');
