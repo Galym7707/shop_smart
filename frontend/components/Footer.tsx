@@ -1,9 +1,7 @@
 // frontend/components/Footer.tsx
-// Этот компонент может быть серверным, если не использует хуки или специфичную для клиента логику.
-// Если в будущем понадобится клиентская логика, добавь "use client";
 import React from 'react';
 
-export default function Footer() { // Изменено на export default
+export default function Footer() {
   const currentYear = new Date().getFullYear();
   return (
     <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8 text-center">
@@ -15,7 +13,6 @@ export default function Footer() { // Изменено на export default
           <a href="mailto:info@shopsmart.com" className="text-gray-400 hover:text-blue-300 px-2 text-xs sm:text-sm transition-colors">
             info@shopsmart.com
           </a>
-          {/* Можно добавить другие ссылки, если необходимо */}
         </div>
       </div>
     </footer>

@@ -1,7 +1,7 @@
 // frontend/components/ThemeSwitcher.tsx
 "use client";
 
-import { useTheme } from '../context/ThemeContext'; // Изменено с @/context/ThemeContext
+import { useTheme } from '../context/ThemeContext'; // Змінено на відносний шлях
 import { Sun, Moon } from 'lucide-react'; 
 
 export default function ThemeSwitcher() {
